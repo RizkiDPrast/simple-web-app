@@ -1,14 +1,20 @@
 import React, { Component } from 'react'
-import { withRouter, Link } from 'react-router-dom'
+import { withRouter } from 'react-router-dom'
 import { gql, graphql } from 'react-apollo'
 
 class Redirect extends Component {
     render() {
-        if (this.props.data.loading) {
-            return (<div>A moment...<br/> you will be redirected to Profile page</div>)
+        const data = this.props.data
+        if (data.loading) {
+            return (<div>A moment...<br/> you will be redirected</div>)
         }        
 
-        window.location = window.location.origin + `/profile/${this.props.data.user.id}/edit`
+        if (data.user.role && data.user.role.name === 'admin') {
+            window.location = window.location.origin + "/dashboard"
+        } else {
+            window.location = `${window.location.origin}/profile/${data.user.id}`
+        }
+        
         return null
     }
 }

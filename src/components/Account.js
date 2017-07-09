@@ -47,7 +47,7 @@ export default class Account extends Component {
                         </div>
                         <NavList user={this.props.user} />
                         <div className='nav navbar-nav navbar-right'>
-                            welcome {name === null ? email : name} <a onClick={this.userSignOut}> sign out </a>
+                            welcome {name === null || name.length === 0 ? email : name} <a onClick={this.userSignOut}> sign out </a>
                         </div>
                     </div>
                 </nav>

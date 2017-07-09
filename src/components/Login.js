@@ -41,7 +41,7 @@ class Login extends Component {
         if (user.role && user.role.name === 'admin') {
             window.location = window.location.origin + "/dashboard"
         } else {
-            window.location = `${window.location.origin}/profile/${this.props.data.user.id}`
+            window.location = `${window.location.origin}/profile/${user.id}`
         }
     }
 
@@ -51,10 +51,11 @@ class Login extends Component {
 
         this.props.signinUser({ variables: { email, password } })
             .then((response) => {
-                window.localStorage.setItem('graphcoolToken', response.data.signinUser.token)
-                console.log('s',this.props)
-                let user = this.props.data.user
-                this.redirectPath(user)                
+                window.localStorage.setItem('graphcoolToken', response.data.signinUser.token)                        
+                this.props.data.refetch()  
+                window.location.reload()                                                                                                                   
+                this.props.history.push(`/redirect`)   
+                
             }).catch((e) => {
                 console.error(e)
                 this.props.history.push(`/login`)
@@ -94,6 +95,12 @@ class Login extends Component {
                     <Link to="/">
                     <i>Sign up</i>
                 </Link>
+                <br/><hr/>
+                <p>                    
+                    username: admin@email.com 
+                    <br/>
+                    password: admin
+                </p>
             </div>
         )
     }

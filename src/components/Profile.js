@@ -46,7 +46,9 @@ class Profile extends Component {
             fullName: "",
             hobby: "",
             hobbies: [],
-            fetched: false
+            fetched: false,
+            roleId: "cj4th8vqw1y7m0154xoapwgpk",
+            roleName: "User"
         }
 
     }
@@ -89,16 +91,23 @@ class Profile extends Component {
         this.hobby.focus()
     }
 
+    onRoleChange = (e) => {        
+        this.setState({roleName:
+                e.target.value  === "cj4th8vqw1y7m0154xoapwgpk" ? "User" : "Admin",
+            roleId: e.target.value})
+    }
+
     onSubmit = () => {
         const id = this.props.data.User.id
         const name = this.state.fullName
         const hobbies = this.state.hobbies
+        const roleId = this.state.roleId
 
         if (id === null || name === null)
             return
 
         this.submit.setAttribute('disabled', 'disabled')
-        let allHobbies = this.props.hobbies.allHobbies
+        let allHobbies = this.props.hobbies.allHobbies        
         let tempH = []
         for (var i = 0; i < hobbies.length; i++) {
             let id = 0, isUnique = true
@@ -124,7 +133,7 @@ class Profile extends Component {
         //updating user
         this.props.updateUser({
             variables: {
-                id, name, hobbiesIds: tempH
+                id, name, hobbiesIds: tempH, roleId
             }
         })
             .then((res) => {
@@ -134,6 +143,8 @@ class Profile extends Component {
                 console.error(e)
                 this.submit.setAttribute('disabled', 'false')
             })
+
+        this.submit.setAttribute('disabled', 'false')
     }
 
     componentDidUpdate() {
@@ -144,6 +155,7 @@ class Profile extends Component {
                     fullName: user.name !== null && user.name.length > 0 ? user.name : " ",
                     hobbies: user.hobbies.map((elm)=> elm.name),
                     roleId: user.role.name === "admin" ? "cj4th8s9v1y7i0154ztp35psy" : "cj4th8vqw1y7m0154xoapwgpk",
+                    roleName: user.role.name,
                     fetched: true
                 })                
             }
@@ -151,10 +163,11 @@ class Profile extends Component {
     }
 
     render() {        
-        if (this.props.data.loading || this.props.login.loading || !this.props.data.User) {
+        if (this.props.data.loading || this.props.login.loading || !this.props.data.User || !this.props.hobbies || !this.props.hobbies.allHobbies) {    
             return (<div>Loading</div>)
         }
-
+        const h = this.props.hobbies.allHobbies.map((elm)=> elm.id + " - " + elm.name)
+        console.log(h)
         let isEditStage = (()=>{            
             return (this.props.match.params.edit && this.props.match.params.edit.toLowerCase() === "edit")
         })()
@@ -190,16 +203,14 @@ class Profile extends Component {
                 (
                     <div className="form-group">
                         <input type="hidden" className="form-control" disabled name="roleId" id="roleId" value={this.state.roleId} />
-                        <input type="text" className="form-control" disabled value={this.state.roleId === "cj4th8vqw1y7m0154xoapwgpk" ? "User" : "Admin"} />
+                        <input type="text" className="form-control"  disabled value={this.state.roleName} />
                     </div>
                 )
 
             )
             :
 
-            null;
-            
-            console.log(this.props, 'pro')
+            null;                        
             
         return (                        
             <div>
@@ -221,7 +232,7 @@ class Profile extends Component {
                         {HobbyInput}
                     </div>
                     <div className="form-group">
-                        <input type="hidden" name="hobbies" id="hobbies" value={this.state.hobbies.join(",")} />
+                        <input type="hidden" name="hobbies" id="hobbies" readOnly value={this.state.hobbies.join(",")} />
                         <Hobbies items={this.state.hobbies} onHobbyDelete={this.onHobbyDelete} />
                     </div>
 
@@ -275,15 +286,19 @@ const UserQuery = gql`
 `
 
 const updateUser = gql`
-    mutation updateUser($id: ID!, $name: String!, $hobbiesIds:[ID!]) {
+    mutation updateUser($id: ID!, $name: String!, $hobbiesIds:[ID!], $roleId:ID!) {
         updateUser(
             id: $id
             name: $name            
             hobbiesIds: $hobbiesIds
+            roleId: $roleId
         ) { 
             id
             email
             hobbies {
+                name
+            }
+            role {
                 name
             }
         } 
