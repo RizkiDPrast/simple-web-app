@@ -3,6 +3,8 @@ import { withRouter, Link } from 'react-router-dom'
 import validator from 'validator'
 import { gql, graphql } from 'react-apollo'
 import Profile from './Profile'
+import Account from './Account'
+
 
 class Register extends Component {
     constructor(props) {
@@ -44,11 +46,11 @@ class Register extends Component {
         }
     }
 
-    onRoleChange = (val) => {
-        this.setState({roleId: val})
+    onRoleChange = (e) => {        
+        this.setState({roleId: e.target.value})
     }
 
-    onSubmit = (e) => {
+    onSubmit = (e) => {        
         this.submit.setAttribute("disabled", "disabled");
         e.preventDefault()
 
@@ -61,15 +63,19 @@ class Register extends Component {
             .then((response) => {
                 this.props.signinUser({ variables: { email, password } })
                     .then((response) => {
-                        window.localStorage.setItem('graphcoolToken', response.data.signinUser.token)                        
-                        this.props.history.push(`/profile${this.props.data.user.id}`)
+                        window.localStorage.setItem('graphcoolToken', response.data.signinUser.token)  
+                        this.props.data.refetch()  
+                        window.location.reload()                                                                                                                   
+                        this.props.history.push(`/redirect`)
                     }).catch((e) => {
-                        console.error(e)                        
+                        console.error(e)                                                                  
                         this.props.history.push(`/`)
+                        window.location.reload()
                     })
             }).catch((e) => {
-                console.error(e)
+                console.error(e)                
                 this.props.history.push(`/`)
+                window.location.reload()
             })
     }
 
@@ -94,8 +100,13 @@ class Register extends Component {
                     return "form-control"
                 return this.validatePassword()
             })()
-        }
-        const roleSelect = this.props.data.User && this.props.data.User.Role === "admin"  ? (
+        }        
+
+        var isAdmin = (()=> {
+            return (this.props.data.user && this.props.data.user.role.name.toLowerCase() === "admin")
+        })()
+
+        const roleSelect = isAdmin  ? (
             <div className="form-group">
                 <label>Role:</label>
                 <select className="form-control" id="role" name="role" value={this.state.roleId} onChange={this.onRoleChange}>                    
@@ -104,11 +115,12 @@ class Register extends Component {
                 </select>
             </div>
         ) :
-            null;
-
+            null;            
         return (
-            <div>
-                <h1>Register</h1>
+            <div>            
+                {isAdmin ? <Account user={this.props.data.user} history={this.props.history}/>   : null}    
+                <h1>{isAdmin ? "Add User" : "Register"}</h1>
+                <div className="container">
                 <form>
                     <div className="form-group">
                         <label>Email:</label>
@@ -129,6 +141,7 @@ class Register extends Component {
                     <Link to="/login">
                     <i>Login</i>
                 </Link>
+                </div>
             </div>
         )
     }
@@ -136,7 +149,7 @@ class Register extends Component {
 }
 
 const createUser = gql`
-  mutation ($roleId: String!, $email: String!, $password: String!) {
+  mutation ($email: String!, $password: String!, $roleId: ID) {
     createUser(roleId:$roleId authProvider: {email: {email: $email, password: $password}}) {
       id
     }

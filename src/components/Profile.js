@@ -1,5 +1,4 @@
 import React, { Component } from 'react'
-import { withRouter } from 'react-router-dom'
 import { gql, graphql } from 'react-apollo'
 import Account from './Account'
 
@@ -52,6 +51,9 @@ class Profile extends Component {
 
     }
 
+    onRoleChange = (e) => {        
+        this.setState({roleId: e.target.value})
+    }
     onNameInput = (e) => {
         this.setState({ fullName: e.target.value })
     }
@@ -87,72 +89,76 @@ class Profile extends Component {
         this.hobby.focus()
     }
 
-    onSubmit = ()=> {
+    onSubmit = () => {
         const id = this.props.data.User.id
         const name = this.state.fullName
         const hobbies = this.state.hobbies
 
-        if(id === null || name === null)
+        if (id === null || name === null)
             return
-        
-        this.submit.setAttribute('disabled','disabled')
-        let allHobbies = this.props.data.allHobbies
+
+        this.submit.setAttribute('disabled', 'disabled')
+        let allHobbies = this.props.hobbies.allHobbies
         let tempH = []
-        for(var i=0 ; i < hobbies.length; i++) {
+        for (var i = 0; i < hobbies.length; i++) {
             let id = 0, isUnique = true
-            for(var a=0 ; a < allHobbies.length; a++) {
-                if(allHobbies[a].name === hobbies[i]) {
+            for (var a = 0; a < allHobbies.length; a++) {
+                if (allHobbies[a].name === hobbies[i]) {
                     isUnique = false
                     id = allHobbies[a].id
-                    break 
-                }                    
+                    break
+                }
             }
-            if(!isUnique) {
+            if (!isUnique) {
                 tempH.push(id)
             } else {
-                this.props.createHobby({ variables: { name: hobbies[i] }})
-                    .then((res)=> {
+                this.props.createHobby({ variables: { name: hobbies[i] } })
+                    .then((res) => {
                         tempH.push(res.name)
                     })
-                    .catch((e)=> {
-                        console.error(e)                                                
+                    .catch((e) => {
+                        console.error(e)
                     })
             }
         }
         //updating user
-        this.props.updateUser({variables: {
-            id, name, hobbiesIds: tempH}})
-        .then((res)=> {
-            this.props.history.push('/profile')
+        this.props.updateUser({
+            variables: {
+                id, name, hobbiesIds: tempH
+            }
         })
-        .catch((e)=> {
-            console.error(e)            
-            this.submit.setAttribute('disabled','false')
-        })
+            .then((res) => {
+                this.props.history.push(`/profile/${id}`)
+            })
+            .catch((e) => {
+                console.error(e)
+                this.submit.setAttribute('disabled', 'false')
+            })
     }
 
     componentDidUpdate() {
         if (!this.state.fetched) {
-            if(this.props.data.User) {
-                const user = this.props.data.User
-            this.setState({
-                fullName: user.name !== null && user.name.length > 0 ? user.name : " ",
-                hobbies: user.hobbies.slice(),
-                fetched: true
-            })   
-            }            
-        }
+            if (this.props.data.User) {
+                const user = this.props.data.User                   
+                this.setState({
+                    fullName: user.name !== null && user.name.length > 0 ? user.name : " ",
+                    hobbies: user.hobbies.map((elm)=> elm.name),
+                    roleId: user.role.name === "admin" ? "cj4th8s9v1y7i0154ztp35psy" : "cj4th8vqw1y7m0154xoapwgpk",
+                    fetched: true
+                })                
+            }
+        }        
     }
 
-    render() {
-
-        if (this.props.data.loading) {
+    render() {        
+        if (this.props.data.loading || this.props.login.loading || !this.props.data.User) {
             return (<div>Loading</div>)
         }
 
-        function isEditStage() {
+        let isEditStage = (()=>{            
             return (this.props.match.params.edit && this.props.match.params.edit.toLowerCase() === "edit")
-        }
+        })()
+
 
         const NameInput = isEditStage ?
             <input type="text" className="form-control" name="fullname" id="name" onInput={this.onNameInput} value={this.state.fullName} />
@@ -168,16 +174,44 @@ class Profile extends Component {
                 </div>
             )
             : null
+            
+        const roleSelect = (this.props.login.user && this.props.login.user.role.name.toLowerCase()) === "admin" ?
+            (isEditStage ?
+                (
+                    <div className="form-group">
+                        <label>Role:</label>
+                        <select className="form-control" id="role" name="role" value={this.state.roleId} onChange={this.onRoleChange}>
+                            <option value="cj4th8vqw1y7m0154xoapwgpk"> User </option>
+                            <option value="cj4th8s9v1y7i0154ztp35psy"> Admin </option>
+                        </select>
+                    </div>
+                ) :
 
-        return (
+                (
+                    <div className="form-group">
+                        <input type="hidden" className="form-control" disabled name="roleId" id="roleId" value={this.state.roleId} />
+                        <input type="text" className="form-control" disabled value={this.state.roleId === "cj4th8vqw1y7m0154xoapwgpk" ? "User" : "Admin"} />
+                    </div>
+                )
+
+            )
+            :
+
+            null;
+            
+            console.log(this.props, 'pro')
+            
+        return (                        
             <div>
-                <Account user={this.props.data.user} history={this.props.history} />
+                <Account user={this.props.login.user} history={this.props.history}/> 
+                <div className="container">  
                 <h1> Profile </h1>
                 <form>
                     <div className="form-group">
                         <label>Email:</label>
-                        <input type="email" className="form-control" disabled name="email" id="email" value={this.props.data.User && this.props.data.User.email} />
+                        <input type="email" className="form-control" disabled name="email" id="email" value={this.props.data.User.email} />
                     </div>
+                    {roleSelect}
                     <div className="form-group">
                         <label>Full Name:</label>
                         {NameInput}
@@ -191,9 +225,10 @@ class Profile extends Component {
                         <Hobbies items={this.state.hobbies} onHobbyDelete={this.onHobbyDelete} />
                     </div>
 
-                    <input type="button" ref={(btn)=> {this.submit = btn}} className={isEditStage ? "btn btn-default" : "hidden"} onClick={this.onSubmit} value="Save" />
+                    <input type="button" ref={(btn) => { this.submit = btn }} className={isEditStage ? "btn btn-default" : "hidden"} onClick={this.onSubmit} value="Save" />
                 </form>
                 <a onClick={this.props.history.goBack}> back </a>
+                </div>
             </div>
         )
     }
@@ -226,8 +261,21 @@ const CreateHobby = gql`
     }
 `
 
+const UserQuery = gql`
+    query login{
+        user {
+            id
+            name
+            email
+            role {
+                name
+            }
+        }
+    }
+`
+
 const updateUser = gql`
-    mutation updateUser($id: String!, $name: String!, $hobbiesIds:[String]) {
+    mutation updateUser($id: ID!, $name: String!, $hobbiesIds:[ID!]) {
         updateUser(
             id: $id
             name: $name            
@@ -249,7 +297,8 @@ const AllHobbies = gql`query {
   }
 }`
 
-export default graphql(CreateHobby)(
-    graphql(AllHobbies)(
-        graphql(updateUser)( 
-            graphql(ProfileQuery, {options: ({ match }) => ({ variables: {id: match.params.id, }, }),})(withRouter(Profile)))))
+
+export default graphql(UserQuery, {name: "login"})(graphql(CreateHobby, {name: "createHobby"})(
+        graphql(updateUser, {name: "updateUser"})(
+            graphql(AllHobbies, {name: "hobbies"})(
+                graphql(ProfileQuery, { options: ({ match }) => ({ variables: { id: match.params.id, } }) })((Profile))))))

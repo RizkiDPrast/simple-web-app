@@ -28,3 +28,16 @@ th, tr {
 span {
   margin: 5px 12px;
 }
+
+.container {
+  transition: all 1s linear;
+}
+
+@media screen and (max-width: 844px) {
+    ul.nav.navbar-nav li{
+      display: none;
+    }
+    .container {
+      margin-top: 80px;
+    }
+}

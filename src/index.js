@@ -28,16 +28,18 @@ const client = new ApolloClient({ networkInterface })
 
 
 ReactDOM.render(
-    <ApolloProvider client={client}>
+    <ApolloProvider client={client}>      
         <Router>
             <div>
                 <Route exact path='/' component={Components.Register} />
+                <Route path='/register' component={Components.Register} />
+                <Route path='/redirect' component={Components.Redirect} />
                 <Route path='/login' component={Components.Login} />
                 <Route path='/dashboard' component={Components.Dashboard} />
                 <Route path='/userlist' component={Components.UserList} />
-                <Route path='/profile/:id/:edit?' component={Components.Profile} />
+                <Route path='/profile/:id/:edit?' component={Components.Profile} />                
             </div>
-        </Router>
+        </Router>                        
     </ApolloProvider>,
     document.getElementById('root'));
 

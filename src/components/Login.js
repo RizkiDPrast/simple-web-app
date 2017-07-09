@@ -2,8 +2,6 @@ import React, { Component } from 'react'
 import { withRouter, Link } from 'react-router-dom'
 import validator from 'validator'
 import { gql, graphql } from 'react-apollo'
-import Dashboard from './Dashboard'
-import Profile from './Profile'
 
 class Login extends Component {
     constructor(props) {
@@ -39,6 +37,14 @@ class Login extends Component {
 
     }
 
+    redirectPath = (user) => {        
+        if (user.role && user.role.name === 'admin') {
+            window.location = window.location.origin + "/dashboard"
+        } else {
+            window.location = `${window.location.origin}/profile/${this.props.data.user.id}`
+        }
+    }
+
     handleLogin = () => {
 
         const { email, password } = this.state
@@ -46,10 +52,12 @@ class Login extends Component {
         this.props.signinUser({ variables: { email, password } })
             .then((response) => {
                 window.localStorage.setItem('graphcoolToken', response.data.signinUser.token)
-                this.props.history.push(`/profile/${this.props.data.user.id}`)        
+                console.log('s',this.props)
+                let user = this.props.data.user
+                this.redirectPath(user)                
             }).catch((e) => {
                 console.error(e)
-                this.props.history.push(`/login`)        
+                this.props.history.push(`/login`)
             })
 
         // window.location.pathname = '/'
@@ -59,17 +67,11 @@ class Login extends Component {
         // redirect if user is logged in
         if (this.props.data && this.props.data.user) {
             console.warn('already logged in')
-            if(this.props.data.user.role && this.props.data.user.role.name === 'admin') {
-                this.props.history.push(`/dashboard}`)   
-                return <Dashboard />  
-            } else {
-                this.props.history.push(`/profile/${this.props.data.user.id}`)   
-                return <Login />  
-            }            
+            this.redirectPath(this.props.data.user)            
         }
     }
 
-    render() {        
+    render() {
         const c = {
             email: this.state.initial || this.validateEmail(this.state.email) ? "form-control" : "form-control error",
             pwd: "form-control"
@@ -117,7 +119,7 @@ const userQuery = gql`
   }
 `
 
-export default graphql(signinUser, {name: 'signinUser'})(
-  graphql(userQuery, { options: { fetchPolicy: 'network-only' }})(withRouter(Login))
+export default graphql(signinUser, { name: 'signinUser' })(
+    graphql(userQuery, { options: { fetchPolicy: 'network-only' } })(withRouter(Login))
 )
 
