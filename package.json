@@ -6,14 +6,19 @@
   "dependencies": {
     "react": "^15.6.1",
     "react-dom": "^15.6.1",
-    "express": "^4.15.3"  
+    "body-parser":"1.17.2",
+    "express": "^4.15.3",
+    "jsonwebtoken": "^7.4.1",
+    "morgan": "^1.8.2",
+    "react-apollo": "^1.4.3",
+    "react-router-dom":"4.1.1",
+    "validator":"^7.2.0"
   },
   "devDependencies": {
     "react-scripts": "1.0.10"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "server": "npm ./node_modules/babel-cli/bin/babel-node.js --presets node6 server.js",
+    "start": "react-scripts start",    
     "build": "react-scripts build",
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject"
